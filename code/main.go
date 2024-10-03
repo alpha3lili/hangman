@@ -6,7 +6,7 @@ import (
 )
 
 var Words string
-var List []string
+var AllWords string
 
 func main() {
 	data, err := ioutil.ReadFile("motlist.txt")
@@ -14,15 +14,6 @@ func main() {
 		fmt.Println("File reading error", err)
 	}
 	lines := string(data)
-
-	for _, line := range lines {
-		if line != '\n' && line != '\r' {
-			Words += string(line)
-		} else {
-			List = append(List, Words)
-			Words = ""
-		}
-	}
-	fmt.Println(List)
+	AllWords = lines
 	Hangman()
 }

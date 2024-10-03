@@ -3,7 +3,10 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"time"
+	"os"
+	"os/exec"
+	"runtime"
+	"strings"
 )
 
 const (
@@ -21,19 +24,34 @@ var LosePoint int
 var Losepointsmax int
 var Inconnue []string
 var begin bool = true
+var win bool
+var LetterTry []string
 
 func Hangman() {
-	rand.Seed(time.Now().UnixNano())
+	ClearScreen()
+	//rand.Seed(time.Now().UnixNano())
+	win = false
+	begin = true
+	LetterTry = []string{}
 	LosePoint = 0
 	Losepointsmax = 11
 	var Sidewords string
 	var lettre string
-	fmt.Println(len(List))
-	var Word string = List[rand.Intn(len(List))]
+	temp := ""
+	for _, element := range AllWords {
+		if element != '\r' && element != ' ' {
+			temp += string(element)
+		}
+	}
+	all := strings.Split(temp, "\n")
+	fmt.Println(len(all))
+	var Word string = all[rand.Intn(len(all))]
+	Inconnue = []string{}
 	for i := 0; i < len(Word); i++ {
 		Inconnue = append(Inconnue, "_")
 	}
 	for {
+		ClearScreen()
 		for _, a := range Inconnue {
 			Sidewords += a
 		}
@@ -46,6 +64,7 @@ func Hangman() {
 		fmt.Println("Word: ", Inconnue)
 		fmt.Println("")
 		fmt.Println("Losepoints: ", LosePoint)
+		DislplayLetter()
 		Error()
 		fmt.Println("")
 		fmt.Println("")
@@ -54,8 +73,9 @@ func Hangman() {
 		if len(lettre) > 1 {
 			if lettre != Word { //Si je ne renvoie pas le même mot, j'augmente mon nombre d'erreur de 2
 				LosePoint += 2
+				LetterTry = append(LetterTry, lettre)
 			} else {
-				Win()
+				win = true
 			}
 		} else {
 			var error int
@@ -63,12 +83,72 @@ func Hangman() {
 				if string(k) == lettre { //Si la lettre est égale à la lettre du mot
 					Inconnue[i] = lettre
 				} else { //Sinon j'augmente mon nombre d'erreur de 1
+
 					error++
 				}
 			}
+			for _, ele := range LetterTry {
+				if ele == lettre {
+					error--
+				}
+			}
+
 			if error == len(Word) { //Si le nombre d'erreur est égale à la longueur du mot, j'augmente mon nombre d'erreur de 1
 				LosePoint++
+				LetterTry = append(LetterTry, lettre)
 			}
+			c := 0
+			for _, ele := range Inconnue {
+				if ele != "_" {
+					c++
+				}
+
+			}
+			if c == len(Word) {
+				win = true
+			}
+		}
+		if LosePoint >= Losepointsmax {
+			win = false
+			break
+		}
+		if win {
+			break
+		}
+	}
+	Finish()
+}
+
+func DislplayLetter() {
+	fmt.Println("")
+	fmt.Print("Letter or word tried: ")
+	for _, a := range LetterTry {
+		fmt.Print(a, " ")
+	}
+	fmt.Println("")
+}
+
+func Finish() {
+	ClearScreen()
+	if win {
+		fmt.Println("You win !")
+		fmt.Println("Do you want to play again ? (yes/no)")
+		var answer string
+		fmt.Scanln(&answer)
+		if answer == "yes" {
+			Hangman()
+		} else {
+			return
+		}
+	} else {
+		fmt.Println("You lose !")
+		fmt.Println("Do you want to play again ? (yes/no)")
+		var answer string
+		fmt.Scanln(&answer)
+		if answer == "yes" {
+			Hangman()
+		} else {
+			return
 		}
 	}
 }
@@ -111,7 +191,7 @@ func Error() {
 		fmt.Println(DarkGreen, "      []\\")
 		fmt.Println(DarkGreen, "    __[]_\\__", Reset)
 	} else if LosePoint == 4 {
-		fmt.Println(LightYellow, "======[]==============|========", Reset)
+		fmt.Println(LightYellow, "======[]=========|========", Reset)
 		fmt.Println(LightYellow, "      []           ", Reset)
 		fmt.Println(LightYellow, "      []         ", Reset)
 		fmt.Println(LightYellow, "      []           ", Reset)
@@ -123,8 +203,8 @@ func Error() {
 		fmt.Println(LightYellow, "      []\\", Reset)
 		fmt.Println(LightYellow, "    __[]_\\__", Reset)
 	} else if LosePoint == 5 {
-		fmt.Println(OrangeYellow, "======[]==============|========", Reset)
-		fmt.Println(OrangeYellow, "      []              |", Reset)
+		fmt.Println(OrangeYellow, "======[]=========|========", Reset)
+		fmt.Println(OrangeYellow, "      []         |", Reset)
 		fmt.Println(OrangeYellow, "      []            ", Reset)
 		fmt.Println(OrangeYellow, "      []          ", Reset)
 		fmt.Println(OrangeYellow, "      []              ", Reset)
@@ -135,10 +215,10 @@ func Error() {
 		fmt.Println(OrangeYellow, "      []\\", Reset)
 		fmt.Println(OrangeYellow, "    __[]_\\__", Reset)
 	} else if LosePoint == 6 {
-		fmt.Println(LightOrange, "======[]==============|========", Reset)
-		fmt.Println(LightOrange, "      []            |", Reset)
-		fmt.Println(LightOrange, "      []            |   |", Reset)
-		fmt.Println(LightOrange, "      []            ||", Reset)
+		fmt.Println(LightOrange, "======[]=========|========", Reset)
+		fmt.Println(LightOrange, "      []         |", Reset)
+		fmt.Println(LightOrange, "      []       |   |", Reset)
+		fmt.Println(LightOrange, "      []         ||", Reset)
 		fmt.Println(LightOrange, "      []              ", Reset)
 		fmt.Println(LightOrange, "      []          ", Reset)
 		fmt.Println(LightOrange, "      []            ", Reset)
@@ -147,72 +227,67 @@ func Error() {
 		fmt.Println(LightOrange, "      []\\", Reset)
 		fmt.Println(LightOrange, "    __[]_\\__", Reset)
 	} else if LosePoint == 7 {
-		fmt.Println(LightOrange, "======[]==============|========")
-		fmt.Println(LightOrange, "      []            |", Reset)
-		fmt.Println(LightOrange, "      []            |   |", Reset)
-		fmt.Println(LightOrange, "      []            ||", Reset)
-		fmt.Println(LightOrange, "      []              |", Reset)
-		fmt.Println(LightOrange, "      []              |", Reset)
-		fmt.Println(LightOrange, "      []              |", Reset)
+		fmt.Println(LightOrange, "======[]=========|========")
+		fmt.Println(LightOrange, "      []         |", Reset)
+		fmt.Println(LightOrange, "      []       |   |", Reset)
+		fmt.Println(LightOrange, "      []         ||", Reset)
+		fmt.Println(LightOrange, "      []         |", Reset)
+		fmt.Println(LightOrange, "      []         |", Reset)
+		fmt.Println(LightOrange, "      []         |", Reset)
 		fmt.Println(LightOrange, "      []               ", Reset)
 		fmt.Println(LightOrange, "      []           ", Reset)
 		fmt.Println(LightOrange, "      []\\", Reset)
 		fmt.Println(LightOrange, "    __[]_\\__", Reset)
 	} else if LosePoint == 8 {
-		fmt.Println(PinkRed, "======[]==============|========", Reset)
-		fmt.Println(PinkRed, "      []            |", Reset)
-		fmt.Println(PinkRed, "      []            |   |", Reset)
-		fmt.Println(PinkRed, "      []            ||", Reset)
-		fmt.Println(PinkRed, "      []              |", Reset)
-		fmt.Println(PinkRed, "      []              |\\", Reset)
-		fmt.Println(PinkRed, "      []              | \\", Reset)
+		fmt.Println(PinkRed, "======[]=========|========", Reset)
+		fmt.Println(PinkRed, "      []         |", Reset)
+		fmt.Println(PinkRed, "      []       |   |", Reset)
+		fmt.Println(PinkRed, "      []         ||", Reset)
+		fmt.Println(PinkRed, "      []         |", Reset)
+		fmt.Println(PinkRed, "      []         |\\", Reset)
+		fmt.Println(PinkRed, "      []         | \\", Reset)
 		fmt.Println(PinkRed, "      []              ", Reset)
 		fmt.Println(PinkRed, "      []            ", Reset)
 		fmt.Println(PinkRed, "      []\\", Reset)
 		fmt.Println(PinkRed, "    __[]_\\__", Reset)
 	} else if LosePoint == 9 {
-		fmt.Println(PinkRed, "======[]==============|========", Reset)
-		fmt.Println(PinkRed, "      []            |", Reset)
-		fmt.Println(PinkRed, "      []            |   |", Reset)
-		fmt.Println(PinkRed, "      []            ||", Reset)
-		fmt.Println(PinkRed, "      []              |", Reset)
-		fmt.Println(PinkRed, "      []             /|\\", Reset)
-		fmt.Println(PinkRed, "      []            / | \\", Reset)
+		fmt.Println(PinkRed, "======[]=========|========", Reset)
+		fmt.Println(PinkRed, "      []         |", Reset)
+		fmt.Println(PinkRed, "      []       |   |", Reset)
+		fmt.Println(PinkRed, "      []         ||", Reset)
+		fmt.Println(PinkRed, "      []         |", Reset)
+		fmt.Println(PinkRed, "      []        /|\\", Reset)
+		fmt.Println(PinkRed, "      []       / | \\", Reset)
 		fmt.Println(PinkRed, "      []             ", Reset)
 		fmt.Println(PinkRed, "      []            ", Reset)
 		fmt.Println(PinkRed, "      []\\", Reset)
 		fmt.Println(PinkRed, "    __[]_\\__", Reset)
 	} else if LosePoint == 10 {
-		fmt.Println(LightRed, "======[]==============|========", Reset)
-		fmt.Println(LightRed, "      []            |", Reset)
-		fmt.Println(LightRed, "      []            |   |", Reset)
-		fmt.Println(LightRed, "      []            ||", Reset)
-		fmt.Println(LightRed, "      []              |", Reset)
-		fmt.Println(LightRed, "      []             /|\\", Reset)
-		fmt.Println(LightRed, "      []            / | \\", Reset)
-		fmt.Println(LightRed, "      []               \\", Reset)
-		fmt.Println(LightRed, "      []                \\", Reset)
+		fmt.Println(LightRed, "======[]=========|========", Reset)
+		fmt.Println(LightRed, "      []         |", Reset)
+		fmt.Println(LightRed, "      []       |   |", Reset)
+		fmt.Println(LightRed, "      []         ||", Reset)
+		fmt.Println(LightRed, "      []         |", Reset)
+		fmt.Println(LightRed, "      []        /|\\", Reset)
+		fmt.Println(LightRed, "      []       / | \\", Reset)
+		fmt.Println(LightRed, "      []         | ", Reset)
 		fmt.Println(LightRed, "      []\\", Reset)
 		fmt.Println(LightRed, "    __[]_\\__", Reset)
 	} else if LosePoint >= 11 {
-		fmt.Println(LightRed, "======[]==============|========", Reset)
-		fmt.Println(LightRed, "      []            |", Reset)
-		fmt.Println(LightRed, "      []            |   |", Reset)
-		fmt.Println(LightRed, "      []            ||", Reset)
-		fmt.Println(LightRed, "      []              |", Reset)
-		fmt.Println(LightRed, "      []             /|\\", Reset)
-		fmt.Println(LightRed, "      []            / | \\", Reset)
-		fmt.Println(LightRed, "      []             / \\", Reset)
-		fmt.Println(LightRed, "      []            /   \\", Reset)
+		fmt.Println(LightRed, "======[]=========|========", Reset)
+		fmt.Println(LightRed, "      []         |", Reset)
+		fmt.Println(LightRed, "      []       |   |", Reset)
+		fmt.Println(LightRed, "      []         ||", Reset)
+		fmt.Println(LightRed, "      []         |", Reset)
+		fmt.Println(LightRed, "      []        /|\\", Reset)
+		fmt.Println(LightRed, "      []       / | \\", Reset)
+		fmt.Println(LightRed, "      []        / \\", Reset)
+		fmt.Println(LightRed, "      []       /   \\", Reset)
 		fmt.Println(LightRed, "      []\\", Reset)
 		fmt.Println(LightRed, "    __[]_\\__", Reset)
 	} else if LosePoint == 0 {
 		fmt.Println("")
 	}
-}
-
-func Win() {
-	fmt.Println("winner")
 }
 
 func Random(word string) {
@@ -222,4 +297,17 @@ func Random(word string) {
 			Inconnue[i] = string(k)
 		}
 	}
+}
+
+func ClearScreen() {
+	//Function to called when we want to clear the Terminal
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "cls")
+	default:
+		cmd = exec.Command("clear")
+	}
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 }
